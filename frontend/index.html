@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AI Knowledge Vault</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1 { color: #2b5797; }
+        textarea, input { width: 100%; padding: 8px; margin: 6px 0; }
+        button { padding: 8px 16px; background: #2b5797; color: white; border: none; cursor: pointer; }
+        button:hover { background: #1a3f6e; }
+        .result { border: 1px solid #ccc; padding: 10px; margin: 6px 0; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <h1>📦 AI Knowledge Vault</h1>
+
+    <section>
+        <h3>Create a Memory</h3>
+        <textarea id="docs" rows="5" placeholder="Enter one document per line"></textarea>
+        <input id="memname" placeholder="Memory name (optional)"/>
+        <button id="createBtn">Create Memory</button>
+        <div id="createOut"></div>
+    </section>
+
+    <section>
+        <h3>Search Memory</h3>
+        <input id="searchMem" placeholder="Memory name"/>
+        <input id="query" placeholder="Enter your question"/>
+        <button id="searchBtn">Search</button>
+        <div id="searchOut"></div>
+    </section>
+
+<script>
+const API = "http://localhost:8000";
+
+document.getElementById("createBtn").onclick = async () => {
+    const docs = document.getElementById("docs").value.split("\n").filter(Boolean);
+    const memname = document.getElementById("memname").value || undefined;
+    const res = await fetch(`${API}/create_memory`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({documents: docs, memory_name: memname})
+    });
+    const data = await res.json();
+    document.getElementById("createOut").innerHTML = `<p>✅ Memory created: <b>${data.memory_name}</b></p>`;
+};
+
+document.getElementById("searchBtn").onclick = async () => {
+    const memory = document.getElementById("searchMem").value;
+    const query = document.getElementById("query").value;
+    const res = await fetch(`${API}/search`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({memory_name: memory, query: query, top_k:5})
+    });
+    const data = await res.json();
+
+    const out = document.getElementById("searchOut");
+    out.innerHTML = "";
+
+    if (!data.results || data.results.length == 0) {
+        out.innerHTML = "<p> No results found. Check memory name or query.</p>"
+        return;
+    }
+    data.results.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "result";
+
+        if (typeof r =="string") {
+            div.innerHTML = `<b>Result:</b> ${r}`;
+        }
+        else {
+        
+        const content = r.text || r.chunk || JSON.stringify(r);
+        div.innerHTML = `<b>Text:</b> ${content}<br><b>Score:</b> ${r.score?.toFixed(4) || "N/A"}`;
+        }
+        out.appendChild(div);
+        
+    });
+};
+</script>
+</body>
+</html>
