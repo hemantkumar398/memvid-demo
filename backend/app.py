@@ -8,7 +8,12 @@ import os, uuid
 from memvid import MemvidEncoder, MemvidRetriever
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+origins = [
+    "https://memvid-demo.vercel.app",  # your Vercel frontend
+    "http://localhost:3000",           # for local testing
+]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"],allow_credentials=True, allow_headers=["*"])
 
 MEM_DIR = "memories"
 os.makedirs(MEM_DIR, exist_ok=True)
